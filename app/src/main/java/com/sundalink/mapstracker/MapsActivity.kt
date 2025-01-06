@@ -40,7 +40,6 @@ class MapsActivity : AppCompatActivity() {
         // Configure OSM
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
-        val geoPoint = GeoPoint(-6.3035467, 106.8693513)
         mapView = findViewById(R.id.mapView)
         mapView.setMultiTouchControls(true)
         mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
@@ -68,22 +67,19 @@ class MapsActivity : AppCompatActivity() {
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                 if (location != null) {
-                    // Get current location and update map
                     val geoPoint = GeoPoint(location.latitude, location.longitude)
 
-                    // Update map view to the current location
                     mapController.setCenter(geoPoint)
                     mapController.animateTo(geoPoint)
 
-                    // Add a marker at the current location
                     val marker = Marker(mapView).apply {
                         position = geoPoint
                         title = "Your Location"
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     }
-                    mapView.overlays.clear() // Clear previous overlays
+                    mapView.overlays.clear()
                     mapView.overlays.add(marker)
-                    mapView.invalidate() // Redraw the map
+                    mapView.invalidate()
                 } else {
                     Toast.makeText(this, "Unable to fetch location", Toast.LENGTH_SHORT).show()
                     Log.e("MapsActivity", "Location is null")
@@ -107,10 +103,10 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun setupMQTT() {
-        val serverUri = "ssl://0a9bf6989c7a448d969de0599ad03ed0.s1.eu.hivemq.cloud:8883"
+        val serverUri = "tcp://93.127.162.185:1883" // Non-SSL MQTT broker
         val clientId = "AndroidClient"
         val username = "sundalink"
-        var passwordi = "@Sundalink123"
+        val passwordd = "@Sundalink123"
 
         mqttClient = MqttAndroidClient(applicationContext, serverUri, clientId)
         mqttClient.setCallback(object : MqttCallback {
@@ -135,14 +131,7 @@ class MapsActivity : AppCompatActivity() {
             isAutomaticReconnect = true
             isCleanSession = true
             userName = username
-            password = passwordi.toCharArray()
-            Log.d("MQTT", "Username: $userName, Password: $password")
-            try {
-                socketFactory = SSLUtils.getSocketFactory(this@MapsActivity, "isrgrootx1.pem")
-                Log.d("MQTT", "SSL socket factory successfully set.")
-            } catch (e: Exception) {
-                Log.e("MQTT", "Error setting SSL socket factory: ${e.message}")
-            }
+            password = passwordd.toCharArray()
         }
 
         try {
@@ -151,8 +140,8 @@ class MapsActivity : AppCompatActivity() {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
                     Log.d("MQTT", "Successfully connected to the MQTT broker.")
                     try {
-                        mqttClient.subscribe("sundalink/sw", 1)
-                        Log.d("MQTT", "Subscribed to topic: sundalink/sw")
+                        mqttClient.subscribe("sundalink/sw/4bcd5678-ef01-4234-abcd-ef9876543210", 1)
+                        Log.d("MQTT", "Subscribed to topic: sundalink/sw/4bcd5678-ef01-4234-abcd-ef9876543210")
                         Toast.makeText(this@MapsActivity, "Connected to MQTT Broker", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
                         Log.e("MQTT", "Error subscribing to topic: ${e.message}")
@@ -183,23 +172,20 @@ class MapsActivity : AppCompatActivity() {
 
             val geoPoint = GeoPoint(latitude, longitude)
 
-            // Check if marker for the device already exists
             val marker = deviceMarkers[device] ?: Marker(mapView).apply {
                 mapView.overlays.add(this)
                 deviceMarkers[device] = this
             }
 
-            // Update marker properties
             marker.position = geoPoint
             marker.title = "Device: $device\nHeart Rate: $heartRate\nTimestamp: $timestamp"
             marker.icon = if (emergency == 1) {
-                resources.getDrawable(R.drawable.ic_emergency, null) // Emergency icon
+                resources.getDrawable(R.drawable.ic_emergency, null)
             } else {
-                resources.getDrawable(R.drawable.ic_normal, null) // Normal icon
+                resources.getDrawable(R.drawable.ic_normal, null)
             }
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
 
-            // Set marker click listener
             marker.setOnMarkerClickListener { item, _ ->
                 item.showInfoWindow()
                 true

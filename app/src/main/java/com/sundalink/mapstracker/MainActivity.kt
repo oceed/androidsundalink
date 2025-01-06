@@ -42,21 +42,14 @@ class MainActivity : AppCompatActivity() {
         loginButton.setOnClickListener {
             val username = usernameEditText.text.toString()
             val password = passwordEditText.text.toString()
-//            login(username, password)
-            val sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE)
-            with(sharedPreferences.edit()) {
-                putString("name", username)
-                putString("user_type", "Jamaah") // Save user type
-                apply()
-            }
-            navigateToHome()
+            login(username, password)
         }
     }
 
     private fun login(username: String, password: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("http://192.168.1.143:8080/api/v1/auth/login")
+                val url = URL("http://93.127.162.185:4000/api/v1/auth/login")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
@@ -103,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                             putString("phone", user.getString("phone"))
                             putString("address", user.getString("address"))
                             putString("role_name", user.getJSONObject("role").getString("name"))
+                            putString("umroh_schedule_id", user.getJSONObject("jamaah").getString("umroh_schedule_id"))
                             putString("user_type", userType) // Save user type
                             apply()
                         }
