@@ -1,0 +1,13 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#50B4B4B4" /> <!-- Warna bayangan -->
+            <corners android:radius="1dp" />
+        </shape>
+    </item>
+    <item android:bottom="2dp"> <!-- Offset bayangan -->
+        <shape android:shape="rectangle">
+            <solid android:color="@color/white" />
+        </shape>
+    </item>
+</layer-list>

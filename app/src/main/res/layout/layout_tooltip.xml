@@ -14,6 +14,7 @@
         app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="25dp"
         app:cardElevation="0dp"
+        android:maxWidth="320dp"
         app:cardUseCompatPadding="true">
 
         <LinearLayout
@@ -25,61 +26,84 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_rounded_rect"
-                android:backgroundTint="@android:color/holo_blue_light"
-                android:padding="10dp">
+                android:backgroundTint="@color/myprimary"
+                android:padding="6dp">
 
                 <ImageView
                     android:id="@+id/imageLocation"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_alignParentStart="true"
                     android:layout_centerInParent="true"
                     android:background="@drawable/bg_circle"
                     android:backgroundTint="@color/white"
-                    android:padding="10dp"
+                    android:padding="3dp"
                     android:src="@drawable/ic_place"
-                    app:tint="@android:color/holo_blue_light" />
+                    app:tint="@color/myprimary" />
 
                 <TextView
-                    android:id="@+id/tvNamaLokasi"
+                    android:id="@+id/markerTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
+                    android:fontFamily="@font/poppinsmedium"
                     android:layout_toEndOf="@+id/imageLocation"
                     android:ellipsize="end"
-                    android:singleLine="true"
-                    android:text="Nama Jalan"
+                    android:maxLines="1"
+                    android:text="Nama"
                     android:textColor="@color/white"
                     android:textSize="16sp" />
-
-                <ImageView
-                    android:id="@+id/imageClose"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerInParent="true"
-                    android:background="@drawable/bg_circle"
-                    android:backgroundTint="@color/white"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_close"
-                    app:tint="@android:color/holo_blue_light" />
 
             </RelativeLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="10dp">
 
                 <TextView
-                    android:id="@+id/tvAlamat"
+                    android:id="@+id/agemarker"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/app_name"
+                    android:text="Age"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="@font/poppinsmedium"
                     android:textColor="@color/black" />
+
+                <TextView
+                    android:id="@+id/phonemarker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="phone"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/black" />
+
+                <TextView
+                    android:id="@+id/gendermarker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="gender"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/black" />
+
+                <TextView
+                    android:id="@+id/smartphonetext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_green"
+                    android:backgroundTint="@color/myprimary"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:text="SMARTPHONE"
+                    android:gravity="center_horizontal"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppinsmedium"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 

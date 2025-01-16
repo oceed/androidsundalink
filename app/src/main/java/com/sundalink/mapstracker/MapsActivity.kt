@@ -1,124 +1,191 @@
 package com.sundalink.mapstracker
 
-import android.content.pm.PackageManager
-import android.location.Location
-import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.provider.Settings
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Toast
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageButton
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.sundalink.mapstracker.utils.SSLUtils
-import org.eclipse.paho.android.service.MqttAndroidClient
-import org.eclipse.paho.client.mqttv3.*
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import com.google.gson.JsonObject
+import com.mapbox.maps.CameraOptions
+import com.mapbox.maps.MapView
+import com.mapbox.maps.Style
+import com.mapbox.maps.ViewAnnotationAnchor
+import com.mapbox.maps.ViewAnnotationOptions
+import com.mapbox.maps.extension.style.expressions.dsl.generated.color
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationManager
+import com.mapbox.maps.plugin.annotation.generated.PointAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPointAnnotationManager
+import com.mapbox.maps.plugin.gestures.addOnMapClickListener
+import com.mapbox.maps.viewannotation.geometry
+import info.mqtt.android.service.Ack
+import info.mqtt.android.service.MqttAndroidClient
+import org.eclipse.paho.client.mqttv3.IMqttActionListener
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
+import org.eclipse.paho.client.mqttv3.IMqttToken
+import org.eclipse.paho.client.mqttv3.MqttCallback
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.json.JSONObject
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.CustomZoomButtonsController
-import org.osmdroid.views.MapController
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
+import kotlin.math.max
 
 class MapsActivity : AppCompatActivity() {
     private lateinit var mapView: MapView
-    private lateinit var mapController: MapController
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mqttClient: MqttAndroidClient
-
-    // Map to store markers by device ID
-    private val deviceMarkers: MutableMap<String, Marker> = mutableMapOf()
+    private var annotationManager: PointAnnotationManager? = null
+    private val deviceMarkers = mutableMapOf<String, PointAnnotation>()
+    private lateinit var deviceId: String
+    private var isCameraFocused = false
+    private var currentBubbleView: View? = null
+    private lateinit var sharedPreferencess: SharedPreferences
+    private var isEmergency = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
-        // Configure OSM
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-
+        window.statusBarColor = resources.getColor(R.color.myprimary, theme)
         mapView = findViewById(R.id.mapView)
-        mapView.setMultiTouchControls(true)
-        mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
-        mapView.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
+        mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
 
-        mapController = mapView.controller as MapController
-        mapController.zoomTo(15) // Default zoom level
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
 
-        checkLocationPermissionAndFetchLocation()
+        mapView.getMapboxMap().addOnStyleLoadedListener {
+            annotationManager = mapView.annotations.createPointAnnotationManager()
+            annotationManager?.addClickListener { annotation ->
+                val data = annotation.getData() ?: return@addClickListener false
+                val title = data.asJsonObject.get("title").asString
+                val details = data.asJsonObject.get("device").asString
 
-        // Initialize MQTT
-        setupMQTT()
-    }
-
-    private fun checkLocationPermissionAndFetchLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fetchDeviceLocation()
-        } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1001)
-        }
-    }
-
-    private fun fetchDeviceLocation() {
-        try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                if (location != null) {
-                    val geoPoint = GeoPoint(location.latitude, location.longitude)
-
-                    mapController.setCenter(geoPoint)
-                    mapController.animateTo(geoPoint)
-
-                    val marker = Marker(mapView).apply {
-                        position = geoPoint
-                        title = "Your Location"
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    }
-                    mapView.overlays.clear()
-                    mapView.overlays.add(marker)
-                    mapView.invalidate()
-                } else {
-                    Toast.makeText(this, "Unable to fetch location", Toast.LENGTH_SHORT).show()
-                    Log.e("MapsActivity", "Location is null")
-                }
-            }.addOnFailureListener {
-                Toast.makeText(this, "Failed to get location: ${it.message}", Toast.LENGTH_SHORT).show()
-                Log.e("MapsActivity", "Error fetching location: ${it.message}")
+                // Tampilkan detail dalam dialog
+                showInfoBubble(annotation)
+                true
             }
-        } catch (e: SecurityException) {
-            Log.e("MapsActivity", "Location access error: ${e.message}")
+        }
+
+        findViewById<ImageButton>(R.id.sendBack).setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            startActivity(intent)
+            finish()
+        }
+
+        setupMQTT()
+        val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
+        sharedPreferencess = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        isEmergency = sharedPreferencess.getBoolean("isEmergency", false)
+        updateButtonText(emergencyButton)
+        emergencyButton.setOnClickListener {
+            toggleEmergency(emergencyButton)
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            fetchDeviceLocation()
+    private fun addOrUpdateMarker(emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, borderWidth: Float = 70f) {
+        if (annotationManager == null) return
+
+        val point = com.mapbox.geojson.Point.fromLngLat(longitude, latitude)
+        val marker = deviceMarkers[device]
+
+        if (marker != null) {
+            if (marker.point != point) {
+                marker.point = point
+                annotationManager?.update(marker)
+            }
+
+            // Jika status berubah, ganti ikon
+            val currentStatus = marker.getData()?.asJsonObject?.get("emergency")?.asBoolean
+            if (currentStatus != isEmergency) {
+                annotationManager?.delete(marker)
+                deviceMarkers.remove(device)
+
+                createNewMarker(emergency, device, latitude, longitude, title, avatarUrl, borderColor, borderWidth)
+            }
         } else {
-            Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+            createNewMarker(emergency, device, latitude, longitude, title, avatarUrl, borderColor, borderWidth)
+            // Muat avatar sebagai ikon marker menggunakan Glide
+
         }
+    }
+
+    private fun createNewMarker(emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, borderWidth: Float = 70f) {
+        val point = com.mapbox.geojson.Point.fromLngLat(longitude, latitude)
+        Glide.with(this)
+            .asBitmap()
+            .load(avatarUrl)
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
+            .circleCrop() // Membuat gambar menjadi lingkaran
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    // Tambahkan border ke gambar bulat
+                    val bitmapWithBorder = addCircularBorderToBitmap(resource, borderColor, borderWidth)
+
+                    // Skalakan bitmap ke ukuran yang diinginkan
+                    val scaledBitmap = Bitmap.createScaledBitmap(bitmapWithBorder, 100, 100, true)
+
+                    val pointAnnotationOptions = PointAnnotationOptions()
+                        .withPoint(point)
+                        .withIconImage(scaledBitmap) // Gambar Bitmap sebagai ikon
+                        .withData( // Simpan data tambahan
+                            JsonObject().apply {
+                                addProperty("title", title)
+                                addProperty("device", device)
+                                addProperty("emergency", emergency)
+                            }
+                        )
+
+                    // Tambahkan marker baru ke peta
+                    val newMarker = annotationManager!!.create(pointAnnotationOptions)
+                    deviceMarkers[device] = newMarker
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    // Tidak ada yang perlu dilakukan jika gambar dibatalkan
+                }
+            })
     }
 
     private fun setupMQTT() {
-        val serverUri = "tcp://93.127.162.185:1883" // Non-SSL MQTT broker
+        val serverUri = "tcp://93.127.162.185:1883"
         val clientId = "AndroidClient"
         val username = "sundalink"
         val passwordd = "@Sundalink123"
 
-        mqttClient = MqttAndroidClient(applicationContext, serverUri, clientId)
+        mqttClient = MqttAndroidClient(applicationContext, serverUri, clientId, Ack.AUTO_ACK)
         mqttClient.setCallback(object : MqttCallback {
             override fun connectionLost(cause: Throwable?) {
                 Log.e("MQTT", "Connection Lost: ${cause?.message}")
-                Toast.makeText(this@MapsActivity, "MQTT Connection Lost", Toast.LENGTH_SHORT).show()
             }
 
             override fun messageArrived(topic: String?, message: MqttMessage?) {
                 Log.d("MQTT", "Message arrived on topic: $topic, message: ${message.toString()}")
                 if (message != null) {
-                    handleMQTTMessage(String(message.payload))
+                    val payload = String(message.payload)
+                    Thread {
+                        handleMQTTMessage(payload)
+                    }.start()
                 }
             }
 
@@ -134,84 +201,185 @@ class MapsActivity : AppCompatActivity() {
             password = passwordd.toCharArray()
         }
 
-        try {
-            Log.d("MQTT", "Connecting to MQTT broker at: $serverUri with client ID: $clientId")
-            mqttClient.connect(options, null, object : IMqttActionListener {
-                override fun onSuccess(asyncActionToken: IMqttToken?) {
-                    Log.d("MQTT", "Successfully connected to the MQTT broker.")
-                    try {
-                        mqttClient.subscribe("sundalink/sw/4bcd5678-ef01-4234-abcd-ef9876543210", 1)
-                        Log.d("MQTT", "Subscribed to topic: sundalink/sw/4bcd5678-ef01-4234-abcd-ef9876543210")
-                        Toast.makeText(this@MapsActivity, "Connected to MQTT Broker", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Log.e("MQTT", "Error subscribing to topic: ${e.message}")
-                    }
-                }
+        mqttClient.connect(options, null, object : IMqttActionListener {
+            override fun onSuccess(asyncActionToken: IMqttToken?) {
+                mqttClient.subscribe("sundalink/sw", 1)
+            }
 
-                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                    Log.e("MQTT", "Failed to connect to MQTT broker: ${exception?.message}")
-                    Toast.makeText(this@MapsActivity, "Failed to Connect to MQTT Broker", Toast.LENGTH_SHORT).show()
-                }
-            })
-        } catch (e: Exception) {
-            Log.e("MQTT", "Exception while connecting to MQTT broker: ${e.message}")
-            e.printStackTrace()
-        }
+            override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                Log.e("MQTT", "Failed to connect to MQTT broker: ${exception?.message}")
+            }
+        })
     }
 
     private fun handleMQTTMessage(payload: String) {
         try {
-            Log.d("MQTT", "Processing MQTT message payload: $payload")
             val data = JSONObject(payload)
-            val heartRate = data.getInt("heart_rate")
-            val latitude = data.getDouble("latitude")
-            val longitude = data.getDouble("longitude")
-            val timestamp = data.getString("timestamp")
-            val device = data.getString("device")
-            val emergency = data.getInt("emergency")
+            if (data.has("latitude") && data.has("longitude")) {
+                val latitude = data.getDouble("latitude")
+                val longitude = data.getDouble("longitude")
+                val device = data.optString("device", "Unknown Device")
+                val heartrate = data.optInt("heartrate", -1)
+                val emergency = data.optBoolean("emergency", false)
+                val avatar = data.optString("avatar", "unknown")
+                val avatarurl = "http://93.127.162.185:4000/api/v1/files/$avatar"
+                var borderColor = 0
+                if (emergency) {
+                    borderColor = Color.parseColor("#DC3F34")
+                } else {
+                    borderColor = ContextCompat.getColor(this, R.color.myprimary)
+                }
 
-            val geoPoint = GeoPoint(latitude, longitude)
+                val markerTitle = if (heartrate != -1) {
+                    "Device: $device\nHeart Rate: $heartrate\nEmergency: $emergency"
+                } else {
+                    "Device: $device\nEmergency: $emergency"
+                }
 
-            val marker = deviceMarkers[device] ?: Marker(mapView).apply {
-                mapView.overlays.add(this)
-                deviceMarkers[device] = this
-            }
+                addOrUpdateMarker(emergency, device, latitude, longitude, markerTitle, avatarurl, borderColor)
 
-            marker.position = geoPoint
-            marker.title = "Device: $device\nHeart Rate: $heartRate\nTimestamp: $timestamp"
-            marker.icon = if (emergency == 1) {
-                resources.getDrawable(R.drawable.ic_emergency, null)
+                // Set camera position if the message is from the current device
+                if (device == deviceId && !isCameraFocused) {
+                    mapView.getMapboxMap().setCamera(CameraOptions.Builder()
+                        .center(com.mapbox.geojson.Point.fromLngLat(longitude, latitude))
+                        .zoom(14.0)
+                        .build())
+                    isCameraFocused = true // Tandai kamera sudah difokuskan
+                }
             } else {
-                resources.getDrawable(R.drawable.ic_normal, null)
+                Log.e("MQTT", "Invalid payload: missing latitude or longitude")
             }
-            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-
-            marker.setOnMarkerClickListener { item, _ ->
-                item.showInfoWindow()
-                true
-            }
-
-            mapView.invalidate()
         } catch (e: Exception) {
             Log.e("MQTT", "Error handling MQTT message: ${e.message}")
-            e.printStackTrace()
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-        mapView.onResume()
+    private fun toggleEmergency(textview: ConstraintLayout) {
+        isEmergency = !isEmergency
+        sharedPreferencess.edit().putBoolean("isEmergency", isEmergency).apply()
+        updateButtonText(textview)
     }
 
-    override fun onPause() {
-        super.onPause()
-        Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-        mapView.onPause()
+    private fun updateButtonText(textview: ConstraintLayout) {
+        if (isEmergency) {
+            textview.background = ColorDrawable(Color.parseColor("#DC3F34"))
+        } else {
+            textview.background = ColorDrawable(Color.parseColor("#42BF4B"))
+        }
     }
 
-    override fun onDestroy() {
-        mqttClient.disconnect()
-        super.onDestroy()
+    /**
+     * Fungsi untuk menambahkan border lingkaran pada bitmap
+     */
+    private fun addCircularBorderToBitmap(bitmap: Bitmap, borderColor: Int, borderWidth: Float): Bitmap {
+        val size = max(bitmap.width, bitmap.height) + (borderWidth * 2).toInt()
+
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(output)
+
+        // Hitung posisi lingkaran
+        val radius = size / 2f
+        val center = size / 2f
+
+        // Gambar border (lingkaran luar)
+        val borderPaint = Paint().apply {
+            isAntiAlias = true
+            color = borderColor
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(center, center, radius, borderPaint)
+
+        // Gambar bitmap di tengah lingkaran
+        val imagePaint = Paint().apply {
+            isAntiAlias = true
+        }
+        val imageRadius = radius - borderWidth
+        val rect = RectF(borderWidth, borderWidth, size - borderWidth, size - borderWidth)
+        canvas.drawBitmap(bitmap, null, rect, imagePaint)
+
+        return output
+    }
+
+    private fun showInfoBubble(annotation: PointAnnotation) {
+        val markerPosition = annotation.geometry as com.mapbox.geojson.Point
+
+        // Jika ada bubble yang sudah ditampilkan, hapus terlebih dahulu
+        currentBubbleView?.let { mapView.removeView(it) }
+
+        val bubbleView = LayoutInflater.from(this).inflate(R.layout.layout_tooltip, null)
+        currentBubbleView = bubbleView // Simpan referensi bubble yang saat ini ditampilkan
+
+        val sharedPreferences: SharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
+        var name = sharedPreferences.getString("name", "")
+        var age = sharedPreferences.getString("age", "")
+        var phone = sharedPreferences.getString("phone", "")
+        var gender = sharedPreferences.getString("gender", "")
+
+        val titleView: TextView = bubbleView.findViewById(R.id.markerTitle)
+        val ageview: TextView = bubbleView.findViewById(R.id.agemarker)
+        val phoneview: TextView = bubbleView.findViewById(R.id.phonemarker)
+        val genderview: TextView = bubbleView.findViewById(R.id.gendermarker)
+        titleView.text = name
+        ageview.text = "Umur: $age"
+        phoneview.text = "Telpon: $phone"
+        genderview.text = "Gender: $gender"
+
+        mapView.addView(bubbleView)
+
+        // Fungsi untuk memperbarui posisi bubble
+        fun updateBubblePosition() {
+            bubbleView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+            val screenPosition = mapView.getMapboxMap().pixelForCoordinate(markerPosition)
+
+            val bubbleWidth = bubbleView.measuredWidth
+            val bubbleHeight = bubbleView.measuredHeight
+
+            val screenWidth = mapView.width
+            val screenHeight = mapView.height
+
+            // Cek apakah marker masih di dalam layar
+            if (screenPosition.x < 0 || screenPosition.x > screenWidth || screenPosition.y < 0 || screenPosition.y > screenHeight) {
+                // Hapus bubble jika marker keluar dari layar
+                currentBubbleView?.let {
+                    mapView.removeView(it)
+                    currentBubbleView = null
+                }
+                return
+            }
+
+            // Jika marker masih di dalam layar, perbarui posisi bubble
+            val params = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                leftMargin = (screenPosition.x - bubbleWidth / 2).toInt()
+                topMargin = (screenPosition.y - bubbleHeight).toInt()
+            }
+            bubbleView.layoutParams = params
+        }
+
+        // Perbarui posisi bubble setiap kali kamera peta bergerak
+        mapView.getMapboxMap().addOnCameraChangeListener {
+            updateBubblePosition()
+        }
+
+        // Perbarui posisi pertama kali setelah bubble ditambahkan
+        updateBubblePosition()
+
+        // Tambahkan listener untuk menutup bubble saat peta diklik
+        mapView.getMapboxMap().addOnMapClickListener {
+            currentBubbleView?.let { view ->
+                mapView.removeView(view)
+                currentBubbleView = null
+            }
+            true
+        }
+
+        // Tambahkan listener untuk menutup bubble ketika bubble itu sendiri di klik
+        bubbleView.setOnClickListener {
+            mapView.removeView(bubbleView)
+            currentBubbleView = null
+        }
     }
 }

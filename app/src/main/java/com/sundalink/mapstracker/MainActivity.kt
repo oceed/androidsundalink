@@ -1,6 +1,7 @@
 // MainActivity.kt
 package com.sundalink.mapstracker
 
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -17,6 +18,10 @@ import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        window.statusBarColor = resources.getColor(R.color.myprimary, theme)
 
         usernameEditText = findViewById(R.id.username)
         passwordEditText = findViewById(R.id.password)
@@ -93,10 +99,15 @@ class MainActivity : AppCompatActivity() {
                             putString("name", user.getString("name"))
                             putString("username", user.getString("username"))
                             putString("email", user.getString("email"))
+                            putString("avatarid", user.getString("avatar_id"))
                             putString("phone", user.getString("phone"))
                             putString("address", user.getString("address"))
                             putString("role_name", user.getJSONObject("role").getString("name"))
-                            putString("umroh_schedule_id", user.getJSONObject("jamaah").getString("umroh_schedule_id"))
+                            putString("umroh_schedule", user.getJSONObject("jamaah").getString("umroh_schedule_id"))
+                            putString("gender", user.getString("gender"))
+                            putString("phone", user.getString("phone"))
+                            putString("birthdate", user.getString("birth_date"))
+                            calculateAndStoreAge(this@MainActivity, user.getString("birth_date"))
                             putString("user_type", userType) // Save user type
                             apply()
                         }
@@ -129,6 +140,30 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "An error occurred: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
+        }
+    }
+
+    fun calculateAndStoreAge(context: Context, birthDateString: String) {
+        try {
+            // Parse birth date
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+            val birthDate = LocalDate.parse(birthDateString, formatter)
+
+            // Calculate age
+            val currentDate = LocalDate.now(ZoneId.systemDefault())
+            val age = Period.between(birthDate, currentDate).years
+
+            // Save to SharedPreferences
+            val sharedPreferences: SharedPreferences = context.getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
+            with(sharedPreferences.edit()) {
+                putString("age", age.toString()) // Simpan umur sebagai Int
+                putString("birthday", birthDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))) // Simpan tanggal lahir
+                apply()
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Handle error (e.g., show error message)
         }
     }
 
