@@ -12,6 +12,8 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.provider.Settings
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -43,6 +45,9 @@ import com.mapbox.maps.plugin.gestures.addOnMapClickListener
 import com.mapbox.maps.viewannotation.geometry
 import info.mqtt.android.service.Ack
 import info.mqtt.android.service.MqttAndroidClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -72,17 +77,38 @@ class MapsActivity : AppCompatActivity() {
         mapView.getMapboxMap().loadStyleUri(Style.MAPBOX_STREETS)
 
         deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        val btmNavChat = findViewById<ConstraintLayout>(R.id.btmnavchat)
+        val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
+        val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
+        val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+
+        btmNavChat.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavProf.setOnClickListener {
+            val intent = Intent(this, ProfiveActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmnavhome.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavJadwal.setOnClickListener {
+            val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
 
         mapView.getMapboxMap().addOnStyleLoadedListener {
-            annotationManager = mapView.annotations.createPointAnnotationManager()
-            annotationManager?.addClickListener { annotation ->
-                val data = annotation.getData() ?: return@addClickListener false
-                val title = data.asJsonObject.get("title").asString
-                val details = data.asJsonObject.get("device").asString
-
-                // Tampilkan detail dalam dialog
-                showInfoBubble(annotation)
-                true
+            runOnUiThread {
+                annotationManager = mapView.annotations.createPointAnnotationManager()
+                annotationManager?.addClickListener { annotation ->
+                    showInfoBubble(annotation)
+                    true
+                }
             }
         }
 
@@ -103,7 +129,7 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
-    private fun addOrUpdateMarker(emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, borderWidth: Float = 70f) {
+    private fun addOrUpdateMarker(userid: String, name: String, age: String, phone: String, gender: String, emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, bubbleData: JsonObject, borderWidth: Float = 70f) {
         if (annotationManager == null) return
 
         val point = com.mapbox.geojson.Point.fromLngLat(longitude, latitude)
@@ -113,25 +139,30 @@ class MapsActivity : AppCompatActivity() {
             if (marker.point != point) {
                 marker.point = point
                 annotationManager?.update(marker)
+                Log.d("marker", "marker diupdate")
             }
 
             // Jika status berubah, ganti ikon
             val currentStatus = marker.getData()?.asJsonObject?.get("emergency")?.asBoolean
-            if (currentStatus != isEmergency) {
+            if (currentStatus != emergency) {
                 annotationManager?.delete(marker)
                 deviceMarkers.remove(device)
 
-                createNewMarker(emergency, device, latitude, longitude, title, avatarUrl, borderColor, borderWidth)
+                createNewMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, title, avatarUrl, borderColor, bubbleData, borderWidth)
+                Log.d("marker", "marker dibuat karena emergency: $currentStatus")
             }
         } else {
-            createNewMarker(emergency, device, latitude, longitude, title, avatarUrl, borderColor, borderWidth)
+            createNewMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, title, avatarUrl, borderColor, bubbleData, borderWidth)
             // Muat avatar sebagai ikon marker menggunakan Glide
-
+            Log.d("marker", "marker dibuat karena tidak ada marker sebelumnya")
         }
     }
 
-    private fun createNewMarker(emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, borderWidth: Float = 70f) {
+    private fun createNewMarker(userid: String, name: String, age: String, phone: String, gender: String, emergency: Boolean, device: String, latitude: Double, longitude: Double, title: String, avatarUrl: String, borderColor: Int, bubbleData: JsonObject, borderWidth: Float = 70f) {
         val point = com.mapbox.geojson.Point.fromLngLat(longitude, latitude)
+        if (isDestroyed || isFinishing) {
+            return
+        }
         Glide.with(this)
             .asBitmap()
             .load(avatarUrl)
@@ -145,20 +176,15 @@ class MapsActivity : AppCompatActivity() {
                     // Skalakan bitmap ke ukuran yang diinginkan
                     val scaledBitmap = Bitmap.createScaledBitmap(bitmapWithBorder, 100, 100, true)
 
-                    val pointAnnotationOptions = PointAnnotationOptions()
-                        .withPoint(point)
-                        .withIconImage(scaledBitmap) // Gambar Bitmap sebagai ikon
-                        .withData( // Simpan data tambahan
-                            JsonObject().apply {
-                                addProperty("title", title)
-                                addProperty("device", device)
-                                addProperty("emergency", emergency)
-                            }
-                        )
+                    runOnUiThread {
+                        val pointAnnotationOptions = PointAnnotationOptions()
+                            .withPoint(point)
+                            .withIconImage(scaledBitmap)
+                            .withData(bubbleData)
 
-                    // Tambahkan marker baru ke peta
-                    val newMarker = annotationManager!!.create(pointAnnotationOptions)
-                    deviceMarkers[device] = newMarker
+                        val newMarker = annotationManager!!.create(pointAnnotationOptions)
+                        deviceMarkers[device] = newMarker
+                    }
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
@@ -169,9 +195,15 @@ class MapsActivity : AppCompatActivity() {
 
     private fun setupMQTT() {
         val serverUri = "tcp://93.127.162.185:1883"
-        val clientId = "AndroidClient"
+        val clientId = "AndroidClient-${deviceId}"
         val username = "sundalink"
         val passwordd = "@Sundalink123"
+        val options = MqttConnectOptions().apply {
+            isAutomaticReconnect = true
+            isCleanSession = false
+            userName = username
+            password = passwordd.toCharArray()
+        }
 
         mqttClient = MqttAndroidClient(applicationContext, serverUri, clientId, Ack.AUTO_ACK)
         mqttClient.setCallback(object : MqttCallback {
@@ -183,9 +215,9 @@ class MapsActivity : AppCompatActivity() {
                 Log.d("MQTT", "Message arrived on topic: $topic, message: ${message.toString()}")
                 if (message != null) {
                     val payload = String(message.payload)
-                    Thread {
+                    CoroutineScope(Dispatchers.IO).launch {
                         handleMQTTMessage(payload)
-                    }.start()
+                    }
                 }
             }
 
@@ -194,22 +226,20 @@ class MapsActivity : AppCompatActivity() {
             }
         })
 
-        val options = MqttConnectOptions().apply {
-            isAutomaticReconnect = true
-            isCleanSession = true
-            userName = username
-            password = passwordd.toCharArray()
+        if (!mqttClient.isConnected) {
+            mqttClient.connect(options, null, object : IMqttActionListener {
+                override fun onSuccess(asyncActionToken: IMqttToken?) {
+                    Log.d("MQTT", "Connected successfully")
+                    mqttClient.subscribe("sundalink/sw", 1)
+                }
+
+                override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
+                    Log.e("MQTT", "Connection failed: ${exception?.message}")
+                }
+            })
+        } else {
+            Log.d("MQTT", "Already connected, skipping reconnect.")
         }
-
-        mqttClient.connect(options, null, object : IMqttActionListener {
-            override fun onSuccess(asyncActionToken: IMqttToken?) {
-                mqttClient.subscribe("sundalink/sw", 1)
-            }
-
-            override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
-                Log.e("MQTT", "Failed to connect to MQTT broker: ${exception?.message}")
-            }
-        })
     }
 
     private fun handleMQTTMessage(payload: String) {
@@ -219,9 +249,14 @@ class MapsActivity : AppCompatActivity() {
                 val latitude = data.getDouble("latitude")
                 val longitude = data.getDouble("longitude")
                 val device = data.optString("device", "Unknown Device")
-                val heartrate = data.optInt("heartrate", -1)
+                val heartrate = data.optInt("heart_rate", -1)
                 val emergency = data.optBoolean("emergency", false)
-                val avatar = data.optString("avatar", "unknown")
+                val age = data.optString("age", "unknown")
+                val avatar = data.optString("avatar", "464fa819-21b6-44ad-bd45-bf4b39f64b62")
+                val name = data.optString("name", "unknown")
+                val gender = data.optString("gender", "unknown")
+                val phone = data.optString("phone", "unknown")
+                val userid = data.optString("userid", "unknown")
                 val avatarurl = "http://93.127.162.185:4000/api/v1/files/$avatar"
                 var borderColor = 0
                 if (emergency) {
@@ -230,21 +265,41 @@ class MapsActivity : AppCompatActivity() {
                     borderColor = ContextCompat.getColor(this, R.color.myprimary)
                 }
 
-                val markerTitle = if (heartrate != -1) {
-                    "Device: $device\nHeart Rate: $heartrate\nEmergency: $emergency"
-                } else {
-                    "Device: $device\nEmergency: $emergency"
+                val markerTitle: String
+                val bubbleData: JsonObject
+
+                if (heartrate != -1) { // Pesan dari smartwatch
+                    markerTitle = "Device: $device\nHeart Rate: $heartrate\nEmergency: $emergency"
+                    bubbleData = JsonObject().apply {
+                        addProperty("device", device)
+                        addProperty("heartrate", heartrate)
+                        addProperty("emergency", emergency)
+                    }
+                } else { // Pesan dari Android
+                    markerTitle = "Device: $device\nEmergency: $emergency"
+                    bubbleData = JsonObject().apply {
+                        addProperty("name", name)
+                        addProperty("age", age)
+                        addProperty("phone", phone)
+                        addProperty("gender", gender)
+                        addProperty("device", device)
+                        addProperty("userid", userid)
+                        addProperty("emergency", emergency)
+                    }
                 }
 
-                addOrUpdateMarker(emergency, device, latitude, longitude, markerTitle, avatarurl, borderColor)
+                runOnUiThread {
+                    addOrUpdateMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, markerTitle, avatarurl, borderColor, bubbleData)
 
-                // Set camera position if the message is from the current device
-                if (device == deviceId && !isCameraFocused) {
-                    mapView.getMapboxMap().setCamera(CameraOptions.Builder()
-                        .center(com.mapbox.geojson.Point.fromLngLat(longitude, latitude))
-                        .zoom(14.0)
-                        .build())
-                    isCameraFocused = true // Tandai kamera sudah difokuskan
+                    if (device == deviceId && !isCameraFocused) {
+                        mapView.getMapboxMap().setCamera(
+                            CameraOptions.Builder()
+                                .center(com.mapbox.geojson.Point.fromLngLat(longitude, latitude))
+                                .zoom(14.0)
+                                .build()
+                        )
+                        isCameraFocused = true
+                    }
                 }
             } else {
                 Log.e("MQTT", "Invalid payload: missing latitude or longitude")
@@ -303,26 +358,51 @@ class MapsActivity : AppCompatActivity() {
     private fun showInfoBubble(annotation: PointAnnotation) {
         val markerPosition = annotation.geometry as com.mapbox.geojson.Point
 
-        // Jika ada bubble yang sudah ditampilkan, hapus terlebih dahulu
+        // Hapus bubble yang sudah ditampilkan sebelumnya
         currentBubbleView?.let { mapView.removeView(it) }
 
+        val data = annotation.getData()?.asJsonObject ?: return
+
+        // Tentukan apakah berasal dari smartwatch (jika ada "heartrate")
+        val isSmartwatch = data.has("heartrate")
+
         val bubbleView = LayoutInflater.from(this).inflate(R.layout.layout_tooltip, null)
-        currentBubbleView = bubbleView // Simpan referensi bubble yang saat ini ditampilkan
+        currentBubbleView = bubbleView // Simpan referensi bubble yang ditampilkan
 
-        val sharedPreferences: SharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
-        var name = sharedPreferences.getString("name", "")
-        var age = sharedPreferences.getString("age", "")
-        var phone = sharedPreferences.getString("phone", "")
-        var gender = sharedPreferences.getString("gender", "")
+        if (isSmartwatch) {
+            // Bubble untuk smartwatch: hanya menampilkan deviceId dan heartrate
+            val deviceId = data.get("device")?.asString ?: "Unknown Device"
+            val heartrate = data.get("heartrate")?.asInt ?: -1
 
-        val titleView: TextView = bubbleView.findViewById(R.id.markerTitle)
-        val ageview: TextView = bubbleView.findViewById(R.id.agemarker)
-        val phoneview: TextView = bubbleView.findViewById(R.id.phonemarker)
-        val genderview: TextView = bubbleView.findViewById(R.id.gendermarker)
-        titleView.text = name
-        ageview.text = "Umur: $age"
-        phoneview.text = "Telpon: $phone"
-        genderview.text = "Gender: $gender"
+            val titleView: TextView = bubbleView.findViewById(R.id.markerTitle)
+            val ageView: TextView = bubbleView.findViewById(R.id.agemarker)
+            val phoneView: TextView = bubbleView.findViewById(R.id.phonemarker)
+            val labeldevice: TextView = bubbleView.findViewById(R.id.smartphonetext)
+
+            titleView.text = "Zein (Jamaah)"
+            labeldevice.text = "SMARTWATCH"
+            ageView.text = "Device ID: $deviceId"
+            phoneView.text = "Heart Rate: $heartrate"
+
+            // Sembunyikan elemen yang tidak relevan
+            bubbleView.findViewById<TextView>(R.id.gendermarker).visibility = View.GONE
+        } else {
+            // Bubble untuk perangkat Android: tampilkan data lengkap
+            val name = data.get("name")?.asString ?: "Unknown"
+            val age = data.get("age")?.asString ?: "Unknown"
+            val phone = data.get("phone")?.asString ?: "Unknown"
+            val gender = data.get("gender")?.asString ?: "Unknown"
+
+            val titleView: TextView = bubbleView.findViewById(R.id.markerTitle)
+            val ageView: TextView = bubbleView.findViewById(R.id.agemarker)
+            val phoneView: TextView = bubbleView.findViewById(R.id.phonemarker)
+            val genderView: TextView = bubbleView.findViewById(R.id.gendermarker)
+
+            titleView.text = name
+            ageView.text = "Umur: $age"
+            phoneView.text = "Telpon: $phone"
+            genderView.text = "Gender: $gender"
+        }
 
         mapView.addView(bubbleView)
 
@@ -382,4 +462,5 @@ class MapsActivity : AppCompatActivity() {
             currentBubbleView = null
         }
     }
+
 }

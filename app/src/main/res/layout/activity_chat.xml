@@ -5,6 +5,18 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0.2"
+        android:src="@drawable/wallpaperchat"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <LinearLayout
         android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
@@ -59,7 +71,6 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/wallpaperchat"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
 
@@ -67,9 +78,8 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_green"
         android:orientation="horizontal"
-        android:padding="22dp"
+        android:padding="18dp"
         app:layout_constraintBottom_toTopOf="@id/btmnav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -83,14 +93,16 @@
             android:layout_marginRight="17dp"
             android:drawablePadding="5dp"
             android:layout_weight="1"
+            android:elevation="2dp"
+            android:layout_margin="5dp"
             android:background="@drawable/bg_message"
             android:hint="Type a message"
             android:padding="10dp" />
 
         <ImageButton
             android:id="@+id/sendButton"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
+            android:layout_width="43dp"
+            android:layout_height="43dp"
             android:layout_gravity="center"
             android:background="@drawable/bg_circle"
             android:src="@drawable/baseline_send_24" />
@@ -108,7 +120,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:id="@+id/btmnavhome"
+            android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground">
@@ -128,7 +141,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    app:srcCompat="@drawable/bnavhome" />
+                    app:srcCompat="@drawable/ijobnavhome" />
 
                 <TextView
                     android:id="@+id/hometext"
@@ -137,7 +150,7 @@
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
                     android:text="Home"
-                    android:textColor="#B1B1B1"
+                    android:textColor="#05BE71"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
             </LinearLayout>
@@ -145,8 +158,9 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
+            android:id="@+id/btmnavjadwal"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground">
@@ -174,7 +188,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
-                    android:text="Info"
+                    android:text="Jadwal"
                     android:textColor="#B1B1B1"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
@@ -183,8 +197,42 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
+            android:id="@+id/sosbtn"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:layout_weight="0.2"
+            android:clickable="true"
+            android:background="#42BF4B"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/sostext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="0dp"
+                    android:fontFamily="@font/poppinssemibold"
+                    android:text="SOS"
+                    android:textColor="@color/white"
+                    android:textSize="19sp"
+                    android:layout_gravity="center"/>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:id="@+id/btmnavchat"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground">
@@ -204,7 +252,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    app:srcCompat="@drawable/ijobnavchat" />
+                    app:srcCompat="@drawable/bnavchat" />
 
                 <TextView
                     android:id="@+id/chattext"
@@ -213,7 +261,7 @@
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
                     android:text="Chat"
-                    android:textColor="#05BE71"
+                    android:textColor="#B1B1B1"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
             </LinearLayout>
@@ -222,9 +270,10 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.25"
+            android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
+            android:id="@+id/profilenavbar"
             android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout

@@ -89,6 +89,8 @@ class MainActivity : AppCompatActivity() {
                             userType = "jamaah"
                         } else if (user.has("mutayib")) {
                             userType = "mutayib"
+                        } else {
+                            userType = "unknown"
                         }
 
                         // Save user details to SharedPreferences

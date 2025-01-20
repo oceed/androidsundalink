@@ -3,6 +3,8 @@ package com.sundalink.mapstracker
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -40,6 +42,8 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var inputMessage: EditText
     private lateinit var sendButton: ImageButton
     private val messages = mutableListOf<ChatMessage>()
+    private lateinit var sharedPreferencess: SharedPreferences
+    private var isEmergency = false
 
     val client = OkHttpClient()
 
@@ -47,6 +51,39 @@ class ChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         window.statusBarColor = resources.getColor(R.color.myprimary, theme)
+
+        val btmNavChat = findViewById<ConstraintLayout>(R.id.btmnavchat)
+        val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
+        val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
+        val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+
+        btmNavChat.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavProf.setOnClickListener {
+            val intent = Intent(this, ProfiveActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmnavhome.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavJadwal.setOnClickListener {
+            val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
+
+        val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
+        sharedPreferencess = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        isEmergency = sharedPreferencess.getBoolean("isEmergency", false)
+        updateButtonText(emergencyButton)
+        emergencyButton.setOnClickListener {
+            toggleEmergency(emergencyButton)
+        }
 
         sharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
         recyclerView = findViewById(R.id.recyclerView)
@@ -143,6 +180,7 @@ class ChatActivity : AppCompatActivity() {
         recyclerView.scrollToPosition(messages.size - 1)
     }
 
+
     private fun sendMessage(message: String) {
         val token = sharedPreferences.getString("jwt_token", "") ?: ""
         val umrohScheduleId = sharedPreferences.getString("umroh_schedule", "") ?: ""
@@ -183,5 +221,18 @@ class ChatActivity : AppCompatActivity() {
             }
         })
     }
-}
 
+    private fun toggleEmergency(textview: ConstraintLayout) {
+        isEmergency = !isEmergency
+        sharedPreferencess.edit().putBoolean("isEmergency", isEmergency).apply()
+        updateButtonText(textview)
+    }
+
+    private fun updateButtonText(textview: ConstraintLayout) {
+        if (isEmergency) {
+            textview.background = ColorDrawable(Color.parseColor("#DC3F34"))
+        } else {
+            textview.background = ColorDrawable(Color.parseColor("#42BF4B"))
+        }
+    }
+}

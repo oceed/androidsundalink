@@ -119,6 +119,11 @@ class LocationMqttService : Service() {
         val sharedPreferences2 = getSharedPreferences("LoginPrefs", MODE_PRIVATE)
         val emergency = sharedPreferences.getBoolean("isEmergency", false)
         val avatar = sharedPreferences2.getString("avatarid", "unknown")
+        val age = sharedPreferences2.getString("age", "unknown")
+        val name = sharedPreferences2.getString("name", "unknown")
+        val gender = sharedPreferences2.getString("gender", "unknown")
+        val phone = sharedPreferences2.getString("phone", "unknown")
+        val userid = sharedPreferences2.getString("user_id", "unknown")
 
         val payload = JSONObject().apply {
             put("latitude", location.latitude)
@@ -126,6 +131,11 @@ class LocationMqttService : Service() {
             put("device", deviceId)
             put("emergency", emergency)
             put("avatar", avatar)
+            put("name", name)
+            put("gender", gender)
+            put("phone", phone)
+            put("age", age)
+            put("userid", userid)
         }
 
         val message = MqttMessage(payload.toString().toByteArray()).apply {

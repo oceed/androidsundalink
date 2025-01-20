@@ -1,11 +1,15 @@
 package com.sundalink.mapstracker
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.sundalink.mapstracker.databinding.ActivityJadwalBinding
@@ -23,6 +27,8 @@ import java.util.concurrent.TimeUnit
 class JadwalActivity : AppCompatActivity() {
     private lateinit var binding: ActivityJadwalBinding
     private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var sharedPreferencess: SharedPreferences
+    private var isEmergency = false
     private var selectedDayId: String? = null
     private val dayList = mutableListOf<Day>()
     private val activityList = mutableListOf<Activity>()
@@ -31,6 +37,40 @@ class JadwalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityJadwalBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        window.statusBarColor = resources.getColor(R.color.myprimary, theme)
+
+        val btmNavChat = findViewById<ConstraintLayout>(R.id.btmnavchat)
+        val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
+        val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
+        val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+
+        btmNavChat.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavProf.setOnClickListener {
+            val intent = Intent(this, ProfiveActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmnavhome.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavJadwal.setOnClickListener {
+            val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
+
+        val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
+        sharedPreferencess = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        isEmergency = sharedPreferencess.getBoolean("isEmergency", false)
+        updateButtonText(emergencyButton)
+        emergencyButton.setOnClickListener {
+            toggleEmergency(emergencyButton)
+        }
 
         sharedPreferences = getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
         val scheduleId = sharedPreferences.getString("umroh_schedule", null)
@@ -67,6 +107,7 @@ class JadwalActivity : AppCompatActivity() {
             // Automatically select the first day
             if (dayList.isNotEmpty()) {
                 selectedDayId = dayList[0].id
+                dayAdapter.setInitialSelectedDay(selectedDayId) // Atur hari pertama sebagai yang dipilih
                 fetchActivities(dayList[0].id, scheduleId, token)
             }
         }
@@ -87,7 +128,10 @@ class JadwalActivity : AppCompatActivity() {
                     val jsonObject = JSONObject(body ?: "")
                     val data = jsonObject.getJSONArray("data")
                     val days = parseDays(data)
-                    runOnUiThread { onSuccess(days) }
+
+
+                    val sortedDays = days.sortedBy { it.day }
+                    runOnUiThread { onSuccess(sortedDays) }
                 } else {
                     Log.e("FetchDays", "Error: ${response.message}")
                 }
@@ -112,9 +156,22 @@ class JadwalActivity : AppCompatActivity() {
                     val jsonObject = JSONObject(body ?: "")
                     val data = jsonObject.getJSONArray("data")
                     val activities = parseActivities(data)
+
+                    // Urutkan activities berdasarkan `time`
+                    val sortedActivities = activities.sortedBy { it.time }
+
+                    // Cari `summary_places` dari Day berdasarkan ID
+                    val selectedDay = dayList.find { it.id == dayId }
+                    val summaryPlaces = selectedDay?.summaryPlaces ?: "Tidak ada summary"
+
+                    // Tambahkan summaryPlaces ke setiap activity
+                    val updatedActivities = sortedActivities.map { activity ->
+                        activity.copy(summaryPlaces = summaryPlaces)
+                    }
+
                     runOnUiThread {
                         activityList.clear()
-                        activityList.addAll(activities)
+                        activityList.addAll(updatedActivities)
                         binding.recyclerViewActivities.adapter?.notifyDataSetChanged()
                     }
                 } else {
@@ -163,5 +220,19 @@ class JadwalActivity : AppCompatActivity() {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
+    }
+
+    private fun toggleEmergency(textview: ConstraintLayout) {
+        isEmergency = !isEmergency
+        sharedPreferencess.edit().putBoolean("isEmergency", isEmergency).apply()
+        updateButtonText(textview)
+    }
+
+    private fun updateButtonText(textview: ConstraintLayout) {
+        if (isEmergency) {
+            textview.background = ColorDrawable(Color.parseColor("#DC3F34"))
+        } else {
+            textview.background = ColorDrawable(Color.parseColor("#42BF4B"))
+        }
     }
 }

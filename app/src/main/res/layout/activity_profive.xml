@@ -219,6 +219,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:id="@+id/btmnavhome"
             android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
@@ -239,7 +240,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    app:srcCompat="@drawable/bnavhome" />
+                    app:srcCompat="@drawable/ijobnavhome" />
 
                 <TextView
                     android:id="@+id/hometext"
@@ -248,7 +249,7 @@
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
                     android:text="Home"
-                    android:textColor="#B1B1B1"
+                    android:textColor="#05BE71"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
             </LinearLayout>
@@ -256,7 +257,7 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
-            android:id="@+id/infonavbar"
+            android:id="@+id/btmnavjadwal"
             android:layout_height="match_parent"
             android:layout_weight="0.2"
             android:clickable="true"
@@ -286,7 +287,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
-                    android:text="Info"
+                    android:text="Jadwal"
                     android:textColor="#B1B1B1"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
@@ -371,6 +372,7 @@
             android:layout_weight="0.2"
             android:clickable="true"
             android:focusable="true"
+            android:id="@+id/profilenavbar"
             android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout
@@ -388,7 +390,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    app:srcCompat="@drawable/profileactive" />
+                    app:srcCompat="@drawable/bnavprofile" />
 
                 <TextView
                     android:id="@+id/textprofilebtmnav"
@@ -397,7 +399,7 @@
                     android:layout_marginTop="0dp"
                     android:fontFamily="@font/poppinsregular"
                     android:text="Profile"
-                    android:textColor="#05BE71"
+                    android:textColor="#B1B1B1"
                     android:textSize="10sp"
                     android:layout_gravity="center"/>
             </LinearLayout>

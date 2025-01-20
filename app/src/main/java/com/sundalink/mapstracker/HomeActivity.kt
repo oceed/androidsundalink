@@ -40,8 +40,32 @@ class HomeActivity : AppCompatActivity() {
         val mapsButton = findViewById<ConstraintLayout>(R.id.mapsbutton)
         val chatButton = findViewById<ConstraintLayout>(R.id.chatbutton)
         val jadwalButton = findViewById<ConstraintLayout>(R.id.jadwalbtn)
+        val btnjadwalsaatini = findViewById<ConstraintLayout>(R.id.jadwalsaatini)
+        val btnpanduan = findViewById<ConstraintLayout>(R.id.panduanhal)
         val btmNavChat = findViewById<ConstraintLayout>(R.id.btmnavchat)
         val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
+        val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
+        val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+
+        btmNavChat.setOnClickListener {
+            val intent = Intent(this, ChatActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavProf.setOnClickListener {
+            val intent = Intent(this, ProfiveActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmnavhome.setOnClickListener {
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmNavJadwal.setOnClickListener {
+            val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
 
         val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
         sharedPreferencess = getSharedPreferences("AppPrefs", MODE_PRIVATE)
@@ -52,7 +76,7 @@ class HomeActivity : AppCompatActivity() {
         }
 
         username.text = sharedPreferences.getString("name", "Unknown")
-        usertype.text = sharedPreferences.getString("user_type", "Unknown")
+        usertype.text = sharedPreferences.getString("role_name", "Unknown")
         val userPhoto = sharedPreferences.getString("avatarid", "Unknown")
         if (userPhoto != null) {
             val imageView = findViewById<ImageView>(R.id.ivUserPhoto)
@@ -67,16 +91,6 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        btmNavChat.setOnClickListener {
-            val intent = Intent(this, ChatActivity::class.java)
-            startActivity(intent)
-        }
-
-        btmNavProf.setOnClickListener {
-            val intent = Intent(this, ProfiveActivity::class.java)
-            startActivity(intent)
-        }
-
         mapsButton.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
@@ -84,6 +98,16 @@ class HomeActivity : AppCompatActivity() {
 
         jadwalButton.setOnClickListener {
             val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnjadwalsaatini.setOnClickListener {
+            val intent = Intent(this, JadwalActivity::class.java)
+            startActivity(intent)
+        }
+
+        btnpanduan.setOnClickListener {
+            val intent = Intent(this, PanduanActivity::class.java)
             startActivity(intent)
         }
     }
@@ -143,6 +167,14 @@ class HomeActivity : AppCompatActivity() {
         } else {
             textview.background = ColorDrawable(Color.parseColor("#42BF4B"))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Baca ulang status emergency dari SharedPreferences
+        isEmergency = sharedPreferencess.getBoolean("isEmergency", false)
+        val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
+        updateButtonText(emergencyButton)
     }
 
     companion object {
