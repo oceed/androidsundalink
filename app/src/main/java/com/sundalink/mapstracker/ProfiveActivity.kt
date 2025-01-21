@@ -80,6 +80,7 @@ class ProfiveActivity : AppCompatActivity() {
 
     private fun logout() {
         val sharedPreferences = getSharedPreferences("LoginPrefs", MODE_PRIVATE)
+        val sharedPreferencess = getSharedPreferences("LoginPrefs", MODE_PRIVATE)
         with(sharedPreferences.edit()) {
             clear() // Menghapus semua data di SharedPreferences
             apply()

@@ -48,6 +48,7 @@ import info.mqtt.android.service.MqttAndroidClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.Request
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -62,6 +63,7 @@ class MapsActivity : AppCompatActivity() {
     private lateinit var mqttClient: MqttAndroidClient
     private var annotationManager: PointAnnotationManager? = null
     private val deviceMarkers = mutableMapOf<String, PointAnnotation>()
+    private val pendingMarkers: MutableSet<String> = mutableSetOf()
     private lateinit var deviceId: String
     private var isCameraFocused = false
     private var currentBubbleView: View? = null
@@ -146,15 +148,22 @@ class MapsActivity : AppCompatActivity() {
             val currentStatus = marker.getData()?.asJsonObject?.get("emergency")?.asBoolean
             if (currentStatus != emergency) {
                 annotationManager?.delete(marker)
-                deviceMarkers.remove(device)
+//                deviceMarkers.remove(device)
 
                 createNewMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, title, avatarUrl, borderColor, bubbleData, borderWidth)
                 Log.d("marker", "marker dibuat karena emergency: $currentStatus")
             }
         } else {
+            if (pendingMarkers.contains(device)) {
+                Log.d("marker", "Marker sedang dalam proses pembuatan untuk device: $device")
+                return
+            }
+
+            // Tandai bahwa marker sedang dibuat
+            pendingMarkers.add(device)
             createNewMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, title, avatarUrl, borderColor, bubbleData, borderWidth)
             // Muat avatar sebagai ikon marker menggunakan Glide
-            Log.d("marker", "marker dibuat karena tidak ada marker sebelumnya")
+            Log.d("marker", "marker dibuat karena tidak ada marker sebelumnya $marker")
         }
     }
 
@@ -184,10 +193,12 @@ class MapsActivity : AppCompatActivity() {
 
                         val newMarker = annotationManager!!.create(pointAnnotationOptions)
                         deviceMarkers[device] = newMarker
+                        pendingMarkers.remove(device)
                     }
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
+                    pendingMarkers.remove(device)
                     // Tidak ada yang perlu dilakukan jika gambar dibatalkan
                 }
             })
@@ -463,4 +474,12 @@ class MapsActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (mqttClient.isConnected) {
+            mqttClient.disconnect()
+        }
+        mqttClient.unregisterResources()
+    }
 }
+

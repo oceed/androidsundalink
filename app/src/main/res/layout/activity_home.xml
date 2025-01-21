@@ -263,7 +263,7 @@
                         android:layout_marginBottom="4dp"
                         android:elevation="2dp"
                         android:layout_weight="0.5"
-                        android:background="@drawable/btnmenu"
+                        android:background="@drawable/btnmenu2"
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground">
@@ -283,6 +283,14 @@
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <ImageView
+                            android:id="@+id/imageView9"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:srcCompat="@drawable/ombak" />
+
+                        <ImageView
                             android:id="@+id/imageView10"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -291,14 +299,6 @@
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/chaticonbaru" />
-
-                        <ImageView
-                            android:id="@+id/imageView9"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:srcCompat="@drawable/ombakchat" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
@@ -319,7 +319,7 @@
                         android:layout_weight="0.5"
                         android:layout_marginBottom="4dp"
                         android:elevation="2dp"
-                        android:background="@drawable/btnmenu4"
+                        android:background="@drawable/btnmenu2"
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground">
@@ -339,6 +339,14 @@
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <ImageView
+                            android:id="@+id/jadwalombak"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:srcCompat="@drawable/ombak" />
+
+                        <ImageView
                             android:id="@+id/jadwalicon"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -347,14 +355,6 @@
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/chaticon" />
-
-                        <ImageView
-                            android:id="@+id/jadwalombak"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:srcCompat="@drawable/ombakjadwal" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -365,7 +365,7 @@
                         android:layout_marginBottom="4dp"
                         android:elevation="2dp"
                         android:layout_weight="0.5"
-                        android:background="@drawable/btnmenu3"
+                        android:background="@drawable/btnmenu2"
                         android:clickable="true"
                         android:focusable="true"
                         android:foreground="?attr/selectableItemBackground">
@@ -400,7 +400,7 @@
                             android:layout_height="wrap_content"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:srcCompat="@drawable/ombakliveview" />
+                            app:srcCompat="@drawable/ombak" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>

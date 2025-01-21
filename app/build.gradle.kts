@@ -61,6 +61,8 @@ dependencies {
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("com.github.hannesa2:paho.mqtt.android:3.3.5")
+    implementation("com.squareup.okhttp3:okhttp-sse:4.11.0")
+    implementation("io.socket:socket.io-client:2.0.1")
 
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
