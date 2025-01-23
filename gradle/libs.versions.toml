@@ -11,6 +11,7 @@ activity = "1.9.3"
 constraintlayout = "2.2.0"
 playServicesLocation = "21.3.0"
 playServicesMaps = "19.0.0"
+firebaseVertexai = "16.0.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -23,6 +24,7 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+firebase-vertexai = { group = "com.google.firebase", name = "firebase-vertexai", version.ref = "firebaseVertexai" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

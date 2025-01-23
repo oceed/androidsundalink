@@ -48,7 +48,7 @@
                     android:layout_centerInParent="true"
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
-                    android:fontFamily="@font/poppinsmedium"
+                    android:fontFamily="@font/poppinssemibold"
                     android:layout_toEndOf="@+id/imageLocation"
                     android:ellipsize="end"
                     android:maxLines="1"
@@ -68,8 +68,9 @@
                     android:id="@+id/agemarker"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textSize="12sp"
                     android:text="Age"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginBottom="5dp"
                     android:fontFamily="@font/poppinsmedium"
                     android:textColor="@color/black" />
 
@@ -78,7 +79,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="phone"
-                    android:layout_marginBottom="10dp"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="5dp"
                     android:fontFamily="@font/poppinsmedium"
                     android:textColor="@color/black" />
 
@@ -87,25 +89,52 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="gender"
-                    android:layout_marginBottom="10dp"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="5dp"
                     android:fontFamily="@font/poppinsmedium"
                     android:textColor="@color/black" />
 
-                <TextView
-                    android:id="@+id/smartphonetext"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_green"
-                    android:backgroundTint="@color/myprimary"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:text="SMARTPHONE"
-                    android:gravity="center_horizontal"
-                    android:layout_gravity="center"
-                    android:fontFamily="@font/poppinsmedium"
-                    android:textColor="@color/white" />
+                    android:gravity="center"
+                    android:orientation="horizontal">
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/smartphonetext"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_green"
+                        android:backgroundTint="@color/myprimary"
+                        android:paddingTop="4dp"
+                        android:textSize="12sp"
+                        android:layout_marginRight="10dp"
+                        android:paddingRight="8dp"
+                        android:paddingLeft="8dp"
+                        android:text="Smartphone"
+                        android:gravity="center_horizontal"
+                        android:layout_gravity="center"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:textColor="@color/white" />
+
+                    <TextView
+                        android:id="@+id/btndirection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_green"
+                        android:backgroundTint="@color/orangetext"
+                        android:textSize="12sp"
+                        android:paddingRight="8dp"
+                        android:paddingLeft="8dp"
+                        android:paddingTop="4dp"
+                        android:text="Get Direction"
+                        android:gravity="center_horizontal"
+                        android:layout_gravity="center"
+                        android:fontFamily="@font/poppinsmedium"
+                        android:textColor="@color/white" />
+
+                </LinearLayout>
+                </LinearLayout>
 
         </LinearLayout>
 

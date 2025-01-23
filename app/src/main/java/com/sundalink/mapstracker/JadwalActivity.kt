@@ -128,7 +128,7 @@ import java.util.concurrent.TimeUnit
             CoroutineScope(Dispatchers.IO).launch {
                 val client = createOkHttpClient()
                 val request = Request.Builder()
-                    .url("http://93.127.162.185:4000/api/v1/umroh-schedules/$scheduleId/daily-programs")
+                    .url("https://api.mabrur.info/api/v1/umroh-schedules/$scheduleId/daily-programs")
                     .addHeader("Authorization", "Bearer $token")
                     .build()
     
@@ -165,7 +165,7 @@ import java.util.concurrent.TimeUnit
             CoroutineScope(Dispatchers.IO).launch {
                 val client = createOkHttpClient()
                 val request = Request.Builder()
-                    .url("http://93.127.162.185:4000/api/v1/umroh-schedules/$scheduleId/daily-programs/$dayId/activities")
+                    .url("https://api.mabrur.info/api/v1/umroh-schedules/$scheduleId/daily-programs/$dayId/activities")
                     .addHeader("Authorization", "Bearer $token")
                     .build()
     
@@ -205,7 +205,7 @@ import java.util.concurrent.TimeUnit
                     Day(
                         id = obj.getString("id"),
                         day = obj.getInt("day"),
-                        summaryPlaces = obj.getString("summary_places")
+                        summaryPlaces = obj.getString("places")
                     )
                 )
             }
@@ -219,7 +219,7 @@ import java.util.concurrent.TimeUnit
                 val obj = jsonArray.getJSONObject(i)
                 val program = obj.optJSONObject("umroh_schedule_daily_program") // Ambil sub-objek
                 val dateString = program?.optString("date", "") ?: ""
-                val summaryplaces = program?.optString("summary_places", "") ?: ""
+                val summaryplaces = program?.optString("places", "") ?: ""
 
                 val date = try {
                     ZonedDateTime.parse(dateString, formatter).toLocalDate().toString() // Format ke string tanggal sederhana (yyyy-MM-dd)

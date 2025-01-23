@@ -138,6 +138,9 @@ class MapsActivity : AppCompatActivity() {
         val marker = deviceMarkers[device]
 
         if (marker != null) {
+            val markerData = marker.getData()?.asJsonObject
+            val isSmartwatch = bubbleData.has("heartrate")
+
             if (marker.point != point) {
                 marker.point = point
                 annotationManager?.update(marker)
@@ -152,6 +155,16 @@ class MapsActivity : AppCompatActivity() {
 
                 createNewMarker(userid, name, age, phone, gender, emergency, device, latitude, longitude, title, avatarUrl, borderColor, bubbleData, borderWidth)
                 Log.d("marker", "marker dibuat karena emergency: $currentStatus")
+            }
+            if (isSmartwatch) {
+                val currentHeartrate = markerData?.get("heartrate")?.asInt
+                val newHeartrate = bubbleData.get("heartrate").asInt
+                if (currentHeartrate != newHeartrate) {
+                    markerData?.addProperty("heartrate", newHeartrate) // Perbarui data heartrate
+                    marker.setData(markerData)
+                    annotationManager?.update(marker)
+                    Log.d("marker", "Heartrate diupdate untuk device $device: $newHeartrate")
+                }
             }
         } else {
             if (pendingMarkers.contains(device)) {
@@ -241,7 +254,7 @@ class MapsActivity : AppCompatActivity() {
             mqttClient.connect(options, null, object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken?) {
                     Log.d("MQTT", "Connected successfully")
-                    mqttClient.subscribe("sundalink/sw", 1)
+                    mqttClient.subscribe("sundalink/sw", 0)
                 }
 
                 override fun onFailure(asyncActionToken: IMqttToken?, exception: Throwable?) {
@@ -263,7 +276,7 @@ class MapsActivity : AppCompatActivity() {
                 val heartrate = data.optInt("heart_rate", -1)
                 val emergency = data.optBoolean("emergency", false)
                 val age = data.optString("age", "unknown")
-                val avatar = data.optString("avatar", "464fa819-21b6-44ad-bd45-bf4b39f64b62")
+                val avatar = data.optString("avatar", "e0c0d274-296c-4075-9984-d50116b0e02e")
                 val name = data.optString("name", "unknown")
                 val gender = data.optString("gender", "unknown")
                 val phone = data.optString("phone", "unknown")
@@ -391,7 +404,7 @@ class MapsActivity : AppCompatActivity() {
             val labeldevice: TextView = bubbleView.findViewById(R.id.smartphonetext)
 
             titleView.text = "Zein (Jamaah)"
-            labeldevice.text = "SMARTWATCH"
+            labeldevice.text = "Smarwatch"
             ageView.text = "Device ID: $deviceId"
             phoneView.text = "Heart Rate: $heartrate"
 
@@ -468,10 +481,10 @@ class MapsActivity : AppCompatActivity() {
         }
 
         // Tambahkan listener untuk menutup bubble ketika bubble itu sendiri di klik
-        bubbleView.setOnClickListener {
-            mapView.removeView(bubbleView)
-            currentBubbleView = null
-        }
+//        bubbleView.setOnClickListener {
+//            mapView.removeView(bubbleView)
+//            currentBubbleView = null
+//        }
     }
 
     override fun onDestroy() {

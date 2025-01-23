@@ -46,6 +46,7 @@ class HomeActivity : AppCompatActivity() {
         val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
         val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
         val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+        val btmphoto = findViewById<ImageView>(R.id.ivUserPhoto)
 
         btmNavChat.setOnClickListener {
             val intent = Intent(this, ChatActivity::class.java)
@@ -53,6 +54,11 @@ class HomeActivity : AppCompatActivity() {
         }
 
         btmNavProf.setOnClickListener {
+            val intent = Intent(this, ProfiveActivity::class.java)
+            startActivity(intent)
+        }
+
+        btmphoto.setOnClickListener {
             val intent = Intent(this, ProfiveActivity::class.java)
             startActivity(intent)
         }
@@ -81,7 +87,7 @@ class HomeActivity : AppCompatActivity() {
         if (userPhoto != null) {
             val imageView = findViewById<ImageView>(R.id.ivUserPhoto)
             Glide.with(this)
-                .load("http://93.127.162.185:4000/api/v1/files/$userPhoto") // Load gambar dari URL
+                .load("https://api.mabrur.info/api/v1/files/$userPhoto") // Load gambar dari URL
                 .circleCrop() // Membuat gambar berbentuk lingkaran
                 .into(imageView)
         }

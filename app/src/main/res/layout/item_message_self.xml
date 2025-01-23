@@ -26,6 +26,7 @@
         <TextView
             android:id="@+id/messageText"
             android:layout_width="wrap_content"
+            android:textColor="@color/blackgreen"
             android:text="Haloo kalian di mana ya, saya butuh medkit"
             android:layout_height="wrap_content"
             android:textSize="16sp"

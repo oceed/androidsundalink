@@ -17,7 +17,7 @@
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="20dp" />
-            <solid android:color="#EFFFEC" /> <!-- Warna utama -->
+            <solid android:color="#E1FFDA" /> <!-- Warna utama -->
         </shape>
     </item>
 </layer-list>

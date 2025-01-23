@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
+import android.icu.text.SimpleDateFormat
+import android.icu.util.TimeZone
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,17 +15,25 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.socket.client.IO
+import io.socket.client.Socket
+import io.socket.emitter.Emitter
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 data class ChatMessage(
@@ -45,34 +56,56 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var sharedPreferencess: SharedPreferences
     private var isEmergency = false
 
-    val client = OkHttpClient()
+    private lateinit var socket: Socket
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         window.statusBarColor = resources.getColor(R.color.myprimary, theme)
 
+        Log.d("ChatActivity", "onCreate: Initializing UI components")
         val btmNavChat = findViewById<ConstraintLayout>(R.id.btmnavchat)
         val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
         val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
         val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+        val kloterText = findViewById<TextView>(R.id.klotertext)
+
+        val btmnav = findViewById<LinearLayout>(R.id.btmnav)
+        val rootView = findViewById<View>(android.R.id.content)
+        rootView.viewTreeObserver.addOnGlobalLayoutListener {
+            val rect = Rect()
+            rootView.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = rootView.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+
+            // Jika keyboard terlihat (keypadHeight > 200, bisa disesuaikan tergantung pada perangkat)
+            if (keypadHeight > screenHeight * 0.15) {
+                btmnav.visibility = View.GONE // Sembunyikan bottom navigation
+            } else {
+                btmnav.visibility = View.VISIBLE // Tampilkan bottom navigation
+            }
+        }
 
         btmNavChat.setOnClickListener {
+            Log.d("ChatActivity", "Navigating to ChatActivity")
             val intent = Intent(this, ChatActivity::class.java)
             startActivity(intent)
         }
 
         btmNavProf.setOnClickListener {
+            Log.d("ChatActivity", "Navigating to ProfiveActivity")
             val intent = Intent(this, ProfiveActivity::class.java)
             startActivity(intent)
         }
 
         btmnavhome.setOnClickListener {
+            Log.d("ChatActivity", "Navigating to HomeActivity")
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
         }
 
         btmNavJadwal.setOnClickListener {
+            Log.d("ChatActivity", "Navigating to JadwalActivity")
             val intent = Intent(this, JadwalActivity::class.java)
             startActivity(intent)
         }
@@ -82,6 +115,7 @@ class ChatActivity : AppCompatActivity() {
         isEmergency = sharedPreferencess.getBoolean("isEmergency", false)
         updateButtonText(emergencyButton)
         emergencyButton.setOnClickListener {
+            Log.d("ChatActivity", "Emergency button clicked")
             toggleEmergency(emergencyButton)
         }
 
@@ -89,16 +123,20 @@ class ChatActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerView)
         inputMessage = findViewById(R.id.inputMessage)
         sendButton = findViewById(R.id.sendButton)
+        kloterText.text = sharedPreferences.getString("umroh_schedule_name", "unknown")
 
         messageAdapter = MessageAdapter(this, messages)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = messageAdapter
 
-        Log.d("ChatActivity", "Initializing ChatActivity")
+        Log.d("ChatActivity", "RecyclerView and Adapter initialized")
+
         fetchMessages()
+        setupSocket()
 
         val sendBackButton: ImageButton = findViewById(R.id.sendBack)
         sendBackButton.setOnClickListener {
+            Log.d("ChatActivity", "Navigating back to MainActivity")
             val intent = Intent(this, MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             startActivity(intent)
@@ -107,21 +145,24 @@ class ChatActivity : AppCompatActivity() {
 
         sendButton.setOnClickListener {
             val messageText = inputMessage.text.toString().trim()
+            Log.d("ChatActivity", "Send button clicked with input: $messageText")
             if (messageText.isNotEmpty()) {
-                Log.d("ChatActivity", "Send button clicked with message: $messageText")
                 sendMessage(messageText)
                 inputMessage.text.clear()
+            } else {
+                Log.d("ChatActivity", "Empty message, not sending")
             }
         }
     }
 
     private fun fetchMessages() {
-        val token = sharedPreferences.getString("jwt_token", "Unknown")
-        val umrohScheduleId = sharedPreferences.getString("umroh_schedule", "Unknown")
-        val url = "http://93.127.162.185:4000/api/v1/umroh-schedules/$umrohScheduleId/chat-messages"
+        val token = sharedPreferences.getString("jwt_token", "") ?: ""
+        val umrohScheduleId = sharedPreferences.getString("umroh_schedule", "") ?: ""
+        val url = "https://api.mabrur.info/api/v1/umroh-schedules/$umrohScheduleId/chat-messages"
 
-        Log.d("ChatActivity", "Fetching messages from URL: $url")
+        Log.d("ChatActivity", "Fetching messages from: $url")
 
+        val client = OkHttpClient()
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer $token")
@@ -129,25 +170,32 @@ class ChatActivity : AppCompatActivity() {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e("ChatActivity", "Error message: ${e.message}")
-                Log.e("ChatActivity", "Error cause: ${e.cause}")
+                Log.e("ChatActivity", "Error fetching messages: ${e.message}")
                 runOnUiThread {
                     Toast.makeText(this@ChatActivity, "Failed to load messages", Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val responseBody = response.body?.string()
-                Log.d("ChatActivity", "Fetch messages response: $responseBody")
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    Log.d("ChatActivity", "Fetch response: $responseBody")
 
-                responseBody?.let {
-                    val json = JSONObject(it)
-                    if (json.getBoolean("success")) {
-                        val data = json.getJSONArray("data")
-                        runOnUiThread {
-                            parseMessages(data)
+                    responseBody?.let {
+                        try {
+                            val json = JSONObject(it)
+                            if (json.getBoolean("success")) {
+                                val data = json.getJSONArray("data")
+                                parseMessages(data)
+                            } else {
+
+                            }
+                        } catch (e: JSONException) {
+                            Log.e("ChatActivity", "JSON Parsing Error: ${e.message}")
                         }
                     }
+                } else {
+                    Log.e("ChatActivity", "Error fetching messages, code: ${response.code}")
                 }
             }
         })
@@ -168,71 +216,102 @@ class ChatActivity : AppCompatActivity() {
                 senderName = sender.getString("name"),
                 isSelf = sender.getString("id") == selfId
             )
-            Log.d("ChatActivity", "Parsed message: $message")
             messages.add(message)
         }
         messages.sortBy { it.timestamp }
-        messageAdapter.notifyDataSetChanged()
-        recyclerView.post { scrollToBottom() }
+        runOnUiThread {
+            messageAdapter.notifyDataSetChanged()
+            scrollToBottom()
+        }
+    }
+
+
+    private fun getCurrentTimestamp(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        return dateFormat.format(Date())
+    }
+
+    private fun setupSocket() {
+        try {
+            socket = IO.socket("wss://api.mabrur.info")
+
+            socket.on(Socket.EVENT_CONNECT) {
+                Log.d("ChatActivity", "Connected to WebSocket")
+            }
+
+            socket.on(Socket.EVENT_DISCONNECT) {
+                Log.d("ChatActivity", "Disconnected from WebSocket, attempting to reconnect")
+                socket.connect() // Reconnect
+            }
+
+            socket.on("chatMessage", Emitter.Listener { args ->
+                try {
+                    val message = args[0] as JSONObject
+                    Log.d("ChatActivity", "Received chatMessage: $message")
+
+                    val sender = message.getJSONObject("sender") // Ambil objek sender dari message
+
+                    val chatMessage = ChatMessage(
+                        id = message.getString("id"),
+                        message = message.getString("message"),
+                        timestamp = message.getString("timestamp"),
+                        senderId = message.getString("sender_id"),
+                        senderName = sender.getString("name"), // Ambil nama dari sender
+                        isSelf = message.getString("sender_id") == sharedPreferences.getString("user_id", "")
+                    )
+
+                    runOnUiThread {
+                        messages.add(chatMessage)
+                        messageAdapter.notifyItemInserted(messages.size - 1)
+                        recyclerView.smoothScrollToPosition(messages.size - 1)
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatActivity", "Error processing chatMessage: ${e.message}", e)
+                }
+            })
+
+            socket.connect()
+        } catch (e: Exception) {
+            Log.e("ChatActivity", "Error while setting up socket: ${e.message}", e)
+        }
     }
 
     private fun scrollToBottom() {
+        Log.d("ChatActivity", "Scrolling to bottom")
         recyclerView.scrollToPosition(messages.size - 1)
-    }
-
-
-    private fun sendMessage(message: String) {
-        val token = sharedPreferences.getString("jwt_token", "") ?: ""
-        val umrohScheduleId = sharedPreferences.getString("umroh_schedule", "") ?: ""
-        val url = "http://93.127.162.185:4000/api/v1/umroh-schedules/$umrohScheduleId/chat-messages"
-        val timestamp = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
-        val json = JSONObject().apply {
-            put("message", message)
-            put("timestamp", timestamp)
-        }
-
-        Log.d("ChatActivity", "Sending message: $json to URL: $url")
-
-        val body = RequestBody.create("application/json".toMediaTypeOrNull(), json.toString())
-
-        val request = Request.Builder()
-            .url(url)
-            .addHeader("Authorization", "Bearer $token")
-            .addHeader("Content-Type", "application/json")
-            .post(body)
-            .build()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e("ChatActivity", "Failed to send message: ${e.message}")
-                runOnUiThread {
-                    Toast.makeText(this@ChatActivity, "Failed to send message", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val responseBody = response.body?.string()
-                Log.d("ChatActivity", "Send message response: $responseBody")
-
-                if (response.isSuccessful) {
-                    fetchMessages()
-                    recyclerView.post { scrollToBottom() }
-                }
-            }
-        })
     }
 
     private fun toggleEmergency(textview: ConstraintLayout) {
         isEmergency = !isEmergency
         sharedPreferencess.edit().putBoolean("isEmergency", isEmergency).apply()
+        Log.d("ChatActivity", "Toggled emergency mode: $isEmergency")
         updateButtonText(textview)
     }
 
     private fun updateButtonText(textview: ConstraintLayout) {
+        Log.d("ChatActivity", "Updating emergency button UI")
         if (isEmergency) {
             textview.background = ColorDrawable(Color.parseColor("#DC3F34"))
         } else {
             textview.background = ColorDrawable(Color.parseColor("#42BF4B"))
+        }
+    }
+
+    private fun sendMessage(message: String) {
+        val json = JSONObject().apply {
+            put("id", getCurrentTimestamp())
+            put("message", message)
+            put("sender_id", sharedPreferences.getString("user_id", ""))
+            put("umroh_schedule_id", sharedPreferences.getString("umroh_schedule", ""))
+            put("timestamp", getCurrentTimestamp())
+            put("type", "create")
+        }
+
+        Log.d("ChatActivity", "Sending message JSON: $json")
+        if (message.isNotEmpty() && !json.optString("sender_id").isNullOrEmpty()) {
+            socket.emit("chatMessage", json)
+        } else {
+            Log.e("ChatActivity", "Invalid data, message not sent")
         }
     }
 }

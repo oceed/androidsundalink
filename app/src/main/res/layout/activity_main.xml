@@ -27,8 +27,8 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:layout_width="31dp"
-                android:layout_height="31dp"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
                 android:layout_gravity="center"
                 android:src="@drawable/logomabrur" />
 
@@ -97,7 +97,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/black"
+                android:textColor="@color/blackgreen"
                 android:alpha="0.8"
                 android:fontFamily="@font/poppinsmedium"
                 android:layout_marginBottom="10dp"
@@ -106,11 +106,14 @@
 
             <EditText
                 android:id="@+id/username"
+                android:textColor="@color/blackgreen"
+                android:textColorHint="@color/blackgreen"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/personlogin"
                 android:drawablePadding="10dp"
                 android:padding="10dp"
+                android:textSize="14sp"
                 android:background="@drawable/bgeditext"
                 android:hint="username" />
 
@@ -122,7 +125,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:alpha="0.8"
-                android:textColor="@color/black"
+                android:textColor="@color/blackgreen"
                 android:text="Password"
                 android:fontFamily="@font/poppinsmedium"
                 android:layout_marginBottom="10dp"
@@ -132,12 +135,17 @@
                 android:id="@+id/password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/ic_visibility"
                 android:drawableStart="@drawable/key"
+                android:textColor="@color/blackgreen"
                 android:password="true"
+                android:textColorHint="@color/blackgreen"
                 android:drawablePadding="10dp"
                 android:background="@drawable/bgeditext"
                 android:padding="10dp"
+                android:textSize="14sp"
                 android:hint="password" />
+
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -148,9 +156,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:textSize="11sp"
+                    android:textColor="@color/blackgreen"
                     android:text="Remember me"
                     android:fontFamily="@font/poppinsregular"
-                    android:alpha="0.5"
+                    android:alpha="0.8"
                     android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -161,6 +171,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:textSize="11sp"
                     android:text="Forgot Password ?"
                     android:fontFamily="@font/poppinsregular"
                     android:textColor="#2B68FF"
@@ -190,6 +201,7 @@
         android:backgroundTint="@color/myprimary"
         android:padding="15dp"
         android:text="LOGIN"
+        android:textColor="@color/white"
         android:textSize="20sp"
         android:textStyle="bold"
         app:cornerRadius="20dp"

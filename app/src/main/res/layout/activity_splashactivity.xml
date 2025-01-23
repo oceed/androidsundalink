@@ -20,8 +20,8 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:src="@drawable/logomabrur" />
 
         <TextView
@@ -31,6 +31,14 @@
             android:text="Mabrur"
             android:textColor="@color/white"
             android:textSize="30sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/poppinsregular"
+            android:text="Haji dan Umroh"
+            android:textColor="@color/white"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <TextView

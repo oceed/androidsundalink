@@ -68,7 +68,7 @@ class ProfiveActivity : AppCompatActivity() {
         if (userPhoto != null) {
             val imageView = findViewById<ImageView>(R.id.profileimage)
             Glide.with(this)
-                .load("http://93.127.162.185:4000/api/v1/files/$userPhoto") // Load gambar dari URL
+                .load("https://api.mabrur.info/api/v1/files/$userPhoto") // Load gambar dari URL
                 .circleCrop() // Membuat gambar berbentuk lingkaran
                 .into(imageView)
         }

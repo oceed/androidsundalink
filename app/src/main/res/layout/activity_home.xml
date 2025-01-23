@@ -49,6 +49,8 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="@drawable/bg_message"
+                    android:padding="5dp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="20dp"
                     android:layout_marginEnd="25dp">
@@ -59,14 +61,15 @@
                         android:layout_height="wrap_content"
                         android:layout_marginRight="10dp"
                         android:src="@drawable/notification"
+                        android:tint="@color/blackgreen"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <ImageView
                         android:id="@+id/ivUserPhoto"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:scaleType="centerCrop"
                         android:src="@drawable/profilemainactivity"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -89,7 +92,7 @@
                             android:layout_marginStart="0dp"
                             android:fontFamily="@font/poppinsmedium"
                             android:text="Abdul Rosyid"
-                            android:textColor="@color/white"
+                            android:textColor="@color/blackgreen"
                             android:textStyle="bold" />
 
                         <TextView
@@ -99,7 +102,7 @@
                             android:layout_marginStart="0dp"
                             android:fontFamily="@font/poppinsmedium"
                             android:text="Jamaah"
-                            android:textColor="@color/white"
+                            android:textColor="@color/blackgreen"
                             android:textSize="12sp" />
                     </LinearLayout>
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -247,9 +250,9 @@
 
                         <ImageView
                             android:id="@+id/imageView6"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="-20dp"
+                            android:layout_marginRight="-18dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/ombak" />
@@ -286,6 +289,7 @@
                             android:id="@+id/imageView9"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginRight="-18dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/ombak" />
@@ -340,8 +344,9 @@
 
                         <ImageView
                             android:id="@+id/jadwalombak"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginRight="-18dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/ombak" />
@@ -398,6 +403,7 @@
                             android:id="@+id/liveviewombah"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginRight="-18dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:srcCompat="@drawable/ombak" />
