@@ -38,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/tanggaljadwal"
-                android:text="12/09/2023   s/d   13/09/2023"
+                android:text="23/Januari  -  01/Februari"
                 android:fontFamily="@font/poppinsmedium"
                 android:textColor="#767676"
                 android:textSize="11sp"/>
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/poppinsmedium"
                 android:padding="10dp"
-                android:text="Jamaah"
+                android:text="2025"
                 android:textColor="@color/myprimary"
                 android:textSize="14sp" />
         </androidx.cardview.widget.CardView>

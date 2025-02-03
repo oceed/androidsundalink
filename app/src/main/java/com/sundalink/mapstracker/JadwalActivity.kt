@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import com.sundalink.mapstracker.databinding.ActivityJadwalBinding
@@ -49,21 +50,19 @@ import java.util.concurrent.TimeUnit
             btmNavChat.setOnClickListener {
                 val intent = Intent(this, ChatActivity::class.java)
                 startActivity(intent)
+                finish()
             }
     
             btmNavProf.setOnClickListener {
                 val intent = Intent(this, ProfiveActivity::class.java)
                 startActivity(intent)
+                finish()
             }
     
             btmnavhome.setOnClickListener {
                 val intent = Intent(this, HomeActivity::class.java)
                 startActivity(intent)
-            }
-    
-            btmNavJadwal.setOnClickListener {
-                val intent = Intent(this, JadwalActivity::class.java)
-                startActivity(intent)
+                finish()
             }
     
             val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
@@ -124,8 +123,8 @@ import java.util.concurrent.TimeUnit
                 onSuccess(days.sortedBy { it.day })
                 return
             }
-    
-            CoroutineScope(Dispatchers.IO).launch {
+
+            lifecycleScope.launch(Dispatchers.IO) {
                 val client = createOkHttpClient()
                 val request = Request.Builder()
                     .url("https://api.mabrur.info/api/v1/umroh-schedules/$scheduleId/daily-programs")
@@ -141,7 +140,7 @@ import java.util.concurrent.TimeUnit
                         val days = parseDays(data)
     
                         val sortedDays = days.sortedBy { it.day }
-                        saveToCacheWithTTL(cacheKey, data.toString(), 60 * 1000) // 1 menit
+                        saveToCacheWithTTL(cacheKey, data.toString(), 1) // 1 menit
                         runOnUiThread { onSuccess(sortedDays) }
                     } else {
                         Log.e("FetchDays", "Error: ${response.message}")
@@ -161,8 +160,8 @@ import java.util.concurrent.TimeUnit
                 updateActivityList(activities)
                 return
             }
-    
-            CoroutineScope(Dispatchers.IO).launch {
+
+            lifecycleScope.launch(Dispatchers.IO) {
                 val client = createOkHttpClient()
                 val request = Request.Builder()
                     .url("https://api.mabrur.info/api/v1/umroh-schedules/$scheduleId/daily-programs/$dayId/activities")
@@ -177,7 +176,7 @@ import java.util.concurrent.TimeUnit
                         val data = jsonObject.getJSONArray("data")
                         val activities = parseActivities(data)
     
-                        saveToCacheWithTTL(cacheKey, data.toString(), 60 * 1000) // 1 menit
+                        saveToCacheWithTTL(cacheKey, data.toString(), 1) // 1 menit
                         updateActivityList(activities)
                     } else {
                         Log.e("FetchActivities", "Error: ${response.message}")

@@ -63,11 +63,6 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        btmnavhome.setOnClickListener {
-            val intent = Intent(this, HomeActivity::class.java)
-            startActivity(intent)
-        }
-
         btmNavJadwal.setOnClickListener {
             val intent = Intent(this, JadwalActivity::class.java)
             startActivity(intent)

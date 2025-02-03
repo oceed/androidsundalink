@@ -82,6 +82,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
+                android:id="@+id/doaumrohbtn"
                 android:layout_marginHorizontal="30dp">
 
                 <View
@@ -111,7 +112,7 @@
                         android:textSize="18sp"
                         android:layout_marginBottom="10dp"
                         android:layout_height="wrap_content"
-                        android:text="Bacaan Dzikir\ndan Sholat"/>
+                        android:text="Doa Haji\ndan Umroh"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -119,7 +120,7 @@
                         android:textColor="@color/white"
                         android:textSize="14dp"
                         android:layout_height="wrap_content"
-                        android:text="20 Bacaan Doa"/>
+                        android:text="8 Bacaan Doa"/>
                 </LinearLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -156,7 +157,7 @@
                         android:textSize="18sp"
                         android:layout_marginBottom="10dp"
                         android:layout_height="wrap_content"
-                        android:text="Bacaan Haji\ndan Umroh"/>
+                        android:text="Doa\nRezeki"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -201,7 +202,7 @@
                         android:textSize="18sp"
                         android:layout_marginBottom="10dp"
                         android:layout_height="wrap_content"
-                        android:text="Jadwal\nSholat"/>
+                        android:text="Doa\nKesehatan"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -246,7 +247,7 @@
                         android:textSize="18sp"
                         android:layout_marginBottom="10dp"
                         android:layout_height="wrap_content"
-                        android:text="Manasik Haji\ndan Umroh"/>
+                        android:text="Doa\nPerjalanan"/>
 
                     <TextView
                         android:layout_width="wrap_content"

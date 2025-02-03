@@ -72,6 +72,7 @@ class ChatActivity : AppCompatActivity() {
 
         val btmnav = findViewById<LinearLayout>(R.id.btmnav)
         val rootView = findViewById<View>(android.R.id.content)
+
         rootView.viewTreeObserver.addOnGlobalLayoutListener {
             val rect = Rect()
             rootView.getWindowVisibleDisplayFrame(rect)
@@ -86,28 +87,25 @@ class ChatActivity : AppCompatActivity() {
             }
         }
 
-        btmNavChat.setOnClickListener {
-            Log.d("ChatActivity", "Navigating to ChatActivity")
-            val intent = Intent(this, ChatActivity::class.java)
-            startActivity(intent)
-        }
-
         btmNavProf.setOnClickListener {
             Log.d("ChatActivity", "Navigating to ProfiveActivity")
             val intent = Intent(this, ProfiveActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmnavhome.setOnClickListener {
             Log.d("ChatActivity", "Navigating to HomeActivity")
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmNavJadwal.setOnClickListener {
             Log.d("ChatActivity", "Navigating to JadwalActivity")
             val intent = Intent(this, JadwalActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)
@@ -153,6 +151,9 @@ class ChatActivity : AppCompatActivity() {
                 Log.d("ChatActivity", "Empty message, not sending")
             }
         }
+
+        val jumlahUserTextView: TextView = findViewById(R.id.jumlahuser)
+        fetchUsersBySchedule(jumlahUserTextView)
     }
 
     private fun fetchMessages() {
@@ -249,14 +250,14 @@ class ChatActivity : AppCompatActivity() {
                     val message = args[0] as JSONObject
                     Log.d("ChatActivity", "Received chatMessage: $message")
 
-                    val sender = message.getJSONObject("sender") // Ambil objek sender dari message
+                    val sender = message.getJSONObject("sender")
 
                     val chatMessage = ChatMessage(
                         id = message.getString("id"),
                         message = message.getString("message"),
                         timestamp = message.getString("timestamp"),
                         senderId = message.getString("sender_id"),
-                        senderName = sender.getString("name"), // Ambil nama dari sender
+                        senderName = sender.getString("name"),
                         isSelf = message.getString("sender_id") == sharedPreferences.getString("user_id", "")
                     )
 
@@ -274,6 +275,64 @@ class ChatActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("ChatActivity", "Error while setting up socket: ${e.message}", e)
         }
+    }
+
+    private fun fetchUsersBySchedule(jumlahUserTextView: TextView) {
+        val token = sharedPreferences.getString("jwt_token", "") ?: ""
+        val scheduleId = sharedPreferences.getString("umroh_schedule", "") ?: ""
+        val url = "https://api.mabrur.info/api/v1/users/umroh-schedule/$scheduleId"
+
+        Log.d("ChatActivity", "Fetching users from: $url")
+
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("Authorization", "Bearer $token")
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("ChatActivity", "Error fetching users: ${e.message}")
+                runOnUiThread {
+                    Toast.makeText(this@ChatActivity, "Failed to load users", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    Log.d("ChatActivity", "Fetch users response: $responseBody")
+
+                    responseBody?.let {
+                        try {
+                            val json = JSONObject(it)
+                            if (json.getBoolean("success")) {
+                                val data = json.getJSONArray("data")
+                                val userCount = data.length()
+
+                                // Simpan data di SharedPreferences
+                                sharedPreferences.edit().apply {
+                                    putString("cached_users", data.toString())
+                                    putInt("cached_user_count", userCount)
+                                    apply()
+                                }
+
+                                // Perbarui jumlah user di UI
+                                runOnUiThread {
+                                    jumlahUserTextView.text = userCount.toString() + " Peserta"
+                                }
+                            } else {
+                                Log.e("ChatActivity", "Failed to fetch users, success=false")
+                            }
+                        } catch (e: JSONException) {
+                            Log.e("ChatActivity", "JSON Parsing Error: ${e.message}")
+                        }
+                    }
+                } else {
+                    Log.e("ChatActivity", "Error fetching users, code: ${response.code}")
+                }
+            }
+        })
     }
 
     private fun scrollToBottom() {

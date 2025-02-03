@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
@@ -124,6 +125,11 @@ class LocationMqttService : Service() {
         )
     }
 
+    private fun getBatteryLevel(): Int {
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+    }
+
     private fun sendLocationToMqtt(location: Location) {
         val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         val sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE)
@@ -135,6 +141,7 @@ class LocationMqttService : Service() {
         val gender = sharedPreferences2.getString("gender", "unknown")
         val phone = sharedPreferences2.getString("phone", "unknown")
         val userid = sharedPreferences2.getString("user_id", "unknown")
+        val batteryLevel = getBatteryLevel()
 
         val payload = JSONObject().apply {
             put("latitude", location.latitude)
@@ -147,6 +154,7 @@ class LocationMqttService : Service() {
             put("phone", phone)
             put("age", age)
             put("userid", userid)
+            put("battery", batteryLevel)
         }
 
         val message = MqttMessage(payload.toString().toByteArray()).apply {

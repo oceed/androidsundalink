@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.org.jsoup.safety.Safelist.basic
+
 pluginManagement {
     repositories {
         google {
@@ -21,6 +23,13 @@ dependencyResolutionManagement {
         }
         maven {
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                username = "mapbox"
+                password = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").get()
+            }
         }
         flatDir {
             dirs("app/libs")

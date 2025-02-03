@@ -32,21 +32,19 @@ class ProfiveActivity : AppCompatActivity() {
         btmNavChat.setOnClickListener {
             val intent = Intent(this, ChatActivity::class.java)
             startActivity(intent)
-        }
-
-        btmNavProf.setOnClickListener {
-            val intent = Intent(this, ProfiveActivity::class.java)
-            startActivity(intent)
+            finish()
         }
 
         btmnavhome.setOnClickListener {
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmNavJadwal.setOnClickListener {
             val intent = Intent(this, JadwalActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)

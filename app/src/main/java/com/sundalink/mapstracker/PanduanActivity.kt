@@ -22,25 +22,35 @@ class PanduanActivity : AppCompatActivity() {
         val btmNavProf = findViewById<ConstraintLayout>(R.id.profilenavbar)
         val btmNavJadwal = findViewById<ConstraintLayout>(R.id.btmnavjadwal)
         val btmnavhome = findViewById<ConstraintLayout>(R.id.btmnavhome)
+        val doaumrohbtnn = findViewById<ConstraintLayout>(R.id.doaumrohbtn)
+
+        doaumrohbtnn.setOnClickListener {
+            val intent = Intent(this, doaumroh::class.java)
+            startActivity(intent)
+        }
 
         btmNavChat.setOnClickListener {
             val intent = Intent(this, ChatActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmNavProf.setOnClickListener {
             val intent = Intent(this, ProfiveActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmnavhome.setOnClickListener {
             val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btmNavJadwal.setOnClickListener {
             val intent = Intent(this, JadwalActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         val emergencyButton = findViewById<ConstraintLayout>(R.id.sosbtn)

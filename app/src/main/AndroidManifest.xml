@@ -23,6 +23,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".GrupinfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".doaumroh"
+            android:exported="false" />
+        <activity
             android:name=".PanduanActivity"
             android:exported="false" />
         <activity
